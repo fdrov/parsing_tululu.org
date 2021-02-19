@@ -12,7 +12,7 @@ id = 1
 
 def check_for_redirect(response):
     if response.history:
-        raise requests.HTTPError
+        raise requests.exceptions.HTTPError
 
 
 while id <= 10:
@@ -22,12 +22,12 @@ while id <= 10:
 
     try:
         check_for_redirect(response)
-    except requests.HTTPError:
-        print(f'EXEPTION at {id}')
+    except requests.exceptions.HTTPError:
+        print(f'EXEPTION at Id = {id}')
         id += 1
         continue
 
-    with open(f'./books//id{id}.txt', 'wb') as book:
+    with open(f'./books/id{id}.txt', 'wb') as book:
         book.write(response.content)
 
     id += 1
