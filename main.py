@@ -18,7 +18,7 @@ def check_for_redirect(response):
 while id <= 10:
     response = requests.get(url + str(id), verify=False)
     response.raise_for_status()
-    print(f'Id = {id} has http-status : {response.status_code} and Content-Type : {response.headers["Content-Type"]}')
+    print(f'Id = {id} has http-status : {response.status_code} and Content-Type : {response.headers["Content-Type"]}, response url : {response.url}')
 
     try:
         check_for_redirect(response)
