@@ -16,16 +16,19 @@ def check_for_redirect(response):
         raise requests.exceptions.HTTPError('An HTTP error occurred')
 
 
-def get_book_name(book_id):
+def get_book_info(book_id):
     url = 'https://tululu.org/b'
-    response = requests.get(url + str(book_id), verify=False)
+    response = requests.get(url+str(book_id), verify=False)
     response.raise_for_status()
     soup = BeautifulSoup(response.text, 'lxml')
     header_text = soup.find('body').find('h1').text
     pic_path = soup.find('div', class_='bookimage').find('img')['src']
     pic_url = urllib.parse.urljoin(url, pic_path)
+    comments = [comment.text for comment in soup.find('table', class_='tabs').find('td', class_='ow_px_td').find_all('span', class_='black')]
     title, author = header_text.split('::')
-    return {'title': pathvalidate.sanitize_filename(title.strip()), 'pic_url': pic_url}
+    # print('Заголовок:', title.strip(), sep=' ')
+    # print('Автор:', author.strip(), sep=' ')
+    return {'title': pathvalidate.sanitize_filename(title.strip()), 'pic_url': pic_url, 'comments': comments}
 
 
 def download_image(pic_url, folder='images/'):
@@ -52,11 +55,11 @@ def download_txt(url, folder='books/'):
         pass
     else:
         Path(f'{folder}').mkdir(parents=True, exist_ok=True)
-        book_info = get_book_name(id)
+        book_info = get_book_info(id)
         download_image(book_info["pic_url"])
         with open(f'{folder}{id}. {book_info["title"]}.txt', 'wb') as book:
             book.write(response.content)
-        print(f'Заголовок: {book_info["title"]}', book_info["pic_url"], sep='\n')
+        print(f'Заголовок: {book_info["title"]}', book_info["pic_url"], True or book_info["comments"], '', sep='\n')
 
 
 while id <= 10:
