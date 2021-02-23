@@ -24,11 +24,12 @@ def get_book_info(book_id):
     header_text = soup.find('body').find('h1').text
     pic_path = soup.find('div', class_='bookimage').find('img')['src']
     pic_url = urllib.parse.urljoin(url, pic_path)
-    comments = [comment.text for comment in soup.find('table', class_='tabs').find('td', class_='ow_px_td').find_all('span', class_='black')]
+    comments = [comment.text for comment in soup.find('td', class_='ow_px_td').find_all('span', class_='black')]
+    genres = [genre.text for genre in soup.find('td', class_='ow_px_td').find('span', class_='d_book').find_all('a')]
     title, author = header_text.split('::')
     # print('Заголовок:', title.strip(), sep=' ')
     # print('Автор:', author.strip(), sep=' ')
-    return {'title': pathvalidate.sanitize_filename(title.strip()), 'pic_url': pic_url, 'comments': comments}
+    return {'title': pathvalidate.sanitize_filename(title.strip()), 'pic_url': pic_url, 'comments': comments, 'genres': genres}
 
 
 def download_image(pic_url, folder='images/'):
@@ -59,7 +60,7 @@ def download_txt(url, folder='books/'):
         download_image(book_info["pic_url"])
         with open(f'{folder}{id}. {book_info["title"]}.txt', 'wb') as book:
             book.write(response.content)
-        print(f'Заголовок: {book_info["title"]}', book_info["pic_url"], True or book_info["comments"], '', sep='\n')
+        print(f'Заголовок: {book_info["title"]}', book_info["pic_url"], book_info["comments"], book_info["genres"], '', sep='\n')
 
 
 while id <= 10:
