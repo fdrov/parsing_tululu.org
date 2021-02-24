@@ -60,7 +60,6 @@ def download_txt(id, folder='books/'):
         Path(f'{folder}').mkdir(parents=True, exist_ok=True)
         with open(f'{folder}{id}. {book_page_info["title"]}.txt', 'wb') as book:
             book.write(response.content)
-        # print(f'Заголовок: {book_page_info["title"]}', book_page_info["pic_url"], book_page_info["comments"], book_page_info["genres"], '', sep='\n')
 
 parser = create_parser()
 namespace = parser.parse_args()
