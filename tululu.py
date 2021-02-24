@@ -6,6 +6,7 @@ import pathvalidate
 import requests
 import urllib3
 from bs4 import BeautifulSoup
+from tqdm import tqdm
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
@@ -66,7 +67,7 @@ def download_txt(id, folder='books/'):
 parser = create_parser()
 namespace = parser.parse_args()
 
-for id in range(namespace.start_id, namespace.end_id + 1):
+for id in tqdm(range(namespace.start_id, namespace.end_id + 1), desc=f'Скачиваем книги', unit='book/', colour='green'):
     response = requests.get(book_url_pattern + str(id), verify=False)
     try:
         check_for_redirect(response)
