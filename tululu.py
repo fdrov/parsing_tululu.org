@@ -1,3 +1,4 @@
+import argparse
 import urllib.parse
 from pathlib import Path
 
@@ -5,7 +6,6 @@ import pathvalidate
 import requests
 import urllib3
 from bs4 import BeautifulSoup
-import argparse
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
@@ -33,7 +33,8 @@ def parse_book_page(response):
     pic_url = urllib.parse.urljoin(response.url, pic_path)
     comments = [comment.text for comment in soup.find('td', class_='ow_px_td').find_all('span', class_='black')]
     genres = [genre.text for genre in soup.find('td', class_='ow_px_td').find('span', class_='d_book').find_all('a')]
-    return {'title': pathvalidate.sanitize_filename(title.strip()), 'author': author.strip(), 'pic_url': pic_url, 'comments': comments, 'genres': genres}
+    return {'title': pathvalidate.sanitize_filename(title.strip()), 'author': author.strip(), 'pic_url': pic_url,
+            'comments': comments, 'genres': genres}
 
 
 def download_image(pic_url, folder='images/'):
@@ -47,19 +48,20 @@ def download_image(pic_url, folder='images/'):
 def download_txt(id, folder='books/'):
     """Функция для скачивания текстовых файлов.
     Args:
-        url (str): Ссылка на id книги, которую хочется скачать.
+        id (int): Ссылка на id книги, которую хочется скачать.
         folder (str): Папка, куда сохранять.
     """
     response = requests.get(book_txt_pattern + str(id), verify=False)
     response.raise_for_status()
     try:
         check_for_redirect(response)
-    except requests.exceptions.HTTPError as err:
+    except requests.exceptions.HTTPError:
         pass
     else:
         Path(f'{folder}').mkdir(parents=True, exist_ok=True)
         with open(f'{folder}{id}. {book_page_info["title"]}.txt', 'wb') as book:
             book.write(response.content)
+
 
 parser = create_parser()
 namespace = parser.parse_args()
