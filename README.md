@@ -5,12 +5,17 @@
 ### Как установить
 Для запуска:
 * должен быть установлени Python 3.8 и выше.
-* библиотеки из файла requirements.txt (установить можно командой ```pip install -r requirements.txt```)
+* библиотеки из файла requirements.txt . Установить можно командой 
+  ```
+  pip install -r requirements.txt
+  ```
 
 ### Как запустить
 
-Ввести в командной строке python `tululu.py`
-
+Ввести в командной строке 
+```
+python tululu.py
+```
 В результате вы увидите следующее:
 ```
 >>> python tululu.py
