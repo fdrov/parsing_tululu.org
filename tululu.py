@@ -70,7 +70,12 @@ def download_txt(book_id, book_txt_pattern, book_page_info, folder='books/'):
     """Функция для скачивания текстовых файлов.
     Args:
         book_id (int): Ссылка на id книги, которую хочется скачать.
-        folder (str): Папка, куда сохранять.
+        book_txt_pattern (str): Шаблон URL для скачивания txt книги.
+        book_page_info (dict): Словарь метаданных о книге.
+        folder (str): Папка, куда сохранять. По-умолчанию 'books/'
+    Returns:
+        None
+
     """
     payload = {'id': book_id}
     response = requests.get(book_txt_pattern, params=payload, verify=False)
