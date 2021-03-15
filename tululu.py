@@ -1,4 +1,5 @@
 import argparse
+import logging
 import urllib.parse
 from pathlib import Path
 
@@ -8,10 +9,29 @@ import urllib3
 from bs4 import BeautifulSoup
 from tqdm import tqdm
 
-urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
-book_url_pattern = 'https://tululu.org/b'
-book_txt_pattern = 'https://tululu.org/txt.php?id='
+def main():
+    logging.basicConfig(level=logging.INFO)
+    urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+    book_url_pattern = 'https://tululu.org/b'
+    book_txt_pattern = 'https://tululu.org/txt.php?id='
+
+    parser = create_parser()
+    namespace = parser.parse_args()
+
+    for book_id in tqdm(range(namespace.start_id, namespace.end_id + 1), desc=f'Скачиваем книги', unit='book/',
+                        colour='green'):
+        response = requests.get(book_url_pattern + str(book_id), verify=False)
+        try:
+            check_for_redirect(response)
+            response.raise_for_status()
+        except requests.exceptions.HTTPError:
+            pass
+        else:
+            book_page_info = parse_book_page(response)
+            print(f'Заголовок: {book_page_info["title"]}', f'Автор: {book_page_info["author"]}', '', sep='\n')
+            download_txt(book_id, book_txt_pattern, book_page_info)
+            download_image(book_page_info['pic_url'])
 
 
 def create_parser():
@@ -46,13 +66,13 @@ def download_image(pic_url, folder='images/'):
         img.write(response.content)
 
 
-def download_txt(id, folder='books/'):
+def download_txt(book_id, book_txt_pattern, book_page_info, folder='books/'):
     """Функция для скачивания текстовых файлов.
     Args:
-        id (int): Ссылка на id книги, которую хочется скачать.
+        book_id (int): Ссылка на id книги, которую хочется скачать.
         folder (str): Папка, куда сохранять.
     """
-    response = requests.get(book_txt_pattern + str(id), verify=False)
+    response = requests.get(book_txt_pattern + str(book_id), verify=False)
     response.raise_for_status()
     try:
         check_for_redirect(response)
@@ -60,23 +80,9 @@ def download_txt(id, folder='books/'):
         pass
     else:
         Path(f'{folder}').mkdir(parents=True, exist_ok=True)
-        with open(f'{folder}{id}. {book_page_info["title"]}.txt', 'wb') as book:
+        with open(f'{folder}{book_id}. {book_page_info["title"]}.txt', 'wb') as book:
             book.write(response.content)
 
 
-parser = create_parser()
-namespace = parser.parse_args()
-
-for id in tqdm(range(namespace.start_id, namespace.end_id + 1), desc=f'Скачиваем книги', unit='book/', colour='green'):
-    response = requests.get(book_url_pattern + str(id), verify=False)
-    try:
-        check_for_redirect(response)
-        response.raise_for_status()
-    except requests.exceptions.HTTPError as err:
-        pass
-    else:
-        book_page_info = parse_book_page(response)
-        # print(book_page_info['title'])
-        print(f'Заголовок: {book_page_info["title"]}', f'Автор: {book_page_info["author"]}', '', sep='\n')
-        download_txt(id)
-        download_image(book_page_info['pic_url'])
+if __name__ == '__main__':
+    main()
