@@ -14,7 +14,7 @@ def main():
     logging.basicConfig(level=logging.INFO)
     urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
     book_url_pattern = 'https://tululu.org/b'
-    book_txt_pattern = 'https://tululu.org/txt.php?id='
+    book_txt_pattern = 'https://tululu.org/txt.php'
 
     parser = create_parser()
     namespace = parser.parse_args()
@@ -72,7 +72,9 @@ def download_txt(book_id, book_txt_pattern, book_page_info, folder='books/'):
         book_id (int): Ссылка на id книги, которую хочется скачать.
         folder (str): Папка, куда сохранять.
     """
-    response = requests.get(book_txt_pattern + str(book_id), verify=False)
+    payload = {'id': book_id}
+    response = requests.get(book_txt_pattern, params=payload, verify=False)
+    print(response.url)
     response.raise_for_status()
     try:
         check_for_redirect(response)
