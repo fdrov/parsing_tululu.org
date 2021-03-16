@@ -8,7 +8,6 @@ import pathvalidate
 import requests
 import urllib3
 from bs4 import BeautifulSoup
-from tqdm import tqdm
 
 
 def main():
@@ -33,7 +32,6 @@ def main():
             download_image(book_page_info['pic_url'])
             print(f'Заголовок: {book_page_info["title"]}', f'Автор: {book_page_info["author"]}', sep='\n')
             print()
-
 
 
 def create_parser():
