@@ -59,11 +59,16 @@ def parse_book_page(response):
 
 
 def download_image(pic_url, folder='images/'):
-    response = requests.get(pic_url, verify=False)
-    Path(f'{folder}').mkdir(parents=True, exist_ok=True)
-    img_name = urllib.parse.unquote(urllib.parse.urlsplit(pic_url).path.split('/')[-1])
-    with open(f'{folder}{img_name}', 'wb') as img:
-        img.write(response.content)
+    try:
+        response = requests.get(pic_url, verify=False)
+        response.raise_for_status()
+    except requests.exceptions.HTTPError:
+        pass
+    else:
+        Path(folder).mkdir(parents=True, exist_ok=True)
+        img_name = urllib.parse.unquote(urllib.parse.urlsplit(pic_url).path.split('/')[-1])
+        with open(f'{folder}{img_name}', 'wb') as img:
+            img.write(response.content)
 
 
 def download_txt(book_id, book_txt_pattern, book_page_info, folder='books/'):
