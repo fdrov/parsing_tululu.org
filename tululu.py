@@ -93,8 +93,8 @@ def download_txt(book_id, book_txt_pattern, book_page_info, folder='books/'):
         pass
     else:
         Path(f'{folder}').mkdir(parents=True, exist_ok=True)
-        with open(f'{folder}{book_id}. {book_page_info["title"]}.txt', 'wb') as book:
-            book.write(response.content)
+        with open(f'{folder}{book_id}. {book_page_info["title"]}.txt', 'w') as book:
+            book.write(response.text)
 
 
 if __name__ == '__main__':
