@@ -66,7 +66,8 @@ def download_image(pic_url, folder='images/'):
         pass
     else:
         Path(folder).mkdir(parents=True, exist_ok=True)
-        img_name = urllib.parse.unquote(urllib.parse.urlsplit(pic_url).path.split('/')[-1])
+        pic_url_path = urllib.parse.unquote(urllib.parse.urlsplit(pic_url).path)
+        img_name = pic_url_path.split('/')[-1]
         with open(f'{folder}{img_name}', 'wb') as img:
             img.write(response.content)
 
