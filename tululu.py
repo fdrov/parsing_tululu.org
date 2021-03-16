@@ -1,5 +1,6 @@
 import argparse
 import logging
+import sys
 import urllib.parse
 from pathlib import Path
 
@@ -19,19 +20,20 @@ def main():
     parser = create_parser()
     namespace = parser.parse_args()
 
-    for book_id in tqdm(range(namespace.start_id, namespace.end_id + 1), desc=f'Скачиваем книги', unit='book/',
-                        colour='green'):
+    for book_id in range(namespace.start_id, namespace.end_id + 1):
         response = requests.get(book_url_pattern + str(book_id), verify=False)
         try:
             check_for_redirect(response)
             response.raise_for_status()
         except requests.exceptions.HTTPError:
-            pass
+            print(f"Книга с id: {book_id} отсутствует на сайте", '', file=sys.stderr,  sep='\n')
         else:
             book_page_info = parse_book_page(response)
-            print(f'Заголовок: {book_page_info["title"]}', f'Автор: {book_page_info["author"]}', '', sep='\n')
             download_txt(book_id, book_txt_pattern, book_page_info)
             download_image(book_page_info['pic_url'])
+            print(f'Заголовок: {book_page_info["title"]}', f'Автор: {book_page_info["author"]}', sep='\n')
+            print()
+
 
 
 def create_parser():
@@ -63,7 +65,7 @@ def download_image(pic_url, folder='images/'):
         response = requests.get(pic_url, verify=False)
         response.raise_for_status()
     except requests.exceptions.HTTPError:
-        pass
+        print(f"Ошибка скачивания изображения id: {pic_url}", file=sys.stderr)
     else:
         Path(folder).mkdir(parents=True, exist_ok=True)
         pic_url_path = urllib.parse.unquote(urllib.parse.urlsplit(pic_url).path)
@@ -85,12 +87,11 @@ def download_txt(book_id, book_txt_pattern, book_page_info, folder='books/'):
     """
     payload = {'id': book_id}
     response = requests.get(book_txt_pattern, params=payload, verify=False)
-    print(response.url)
     response.raise_for_status()
     try:
         check_for_redirect(response)
     except requests.exceptions.HTTPError:
-        pass
+        print(f'Ошибка скачивания текста книги id: {book_id}', file=sys.stderr)
     else:
         Path(f'{folder}').mkdir(parents=True, exist_ok=True)
         with open(f'{folder}{book_id}. {book_page_info["title"]}.txt', 'w') as book:
