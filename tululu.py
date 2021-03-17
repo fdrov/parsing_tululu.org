@@ -24,14 +24,14 @@ def main():
         try:
             check_for_redirect(response)
             response.raise_for_status()
-        except requests.exceptions.HTTPError:
-            print(f"Книга с id: {book_id} отсутствует на сайте", '', file=sys.stderr,  sep='\n')
-        else:
             book_page_info = parse_book_page(response)
             download_txt(book_id, book_txt_pattern, book_page_info)
             download_image(book_page_info['pic_url'])
             print(f'Заголовок: {book_page_info["title"]}', f'Автор: {book_page_info["author"]}', sep='\n')
             print()
+        except requests.exceptions.HTTPError as err:
+            print(err, book_id, file=sys.stderr)
+            print(file=sys.stderr)
 
 
 def create_parser():
@@ -43,7 +43,13 @@ def create_parser():
 
 def check_for_redirect(response):
     if response.url == 'https://tululu.org/':
-        raise requests.exceptions.HTTPError('An HTTP error occurred')
+        raise_func_name = sys._getframe(1).f_code.co_name
+        messages = {
+            'main': 'Отсутствует на сайте книга id =',
+            'download_txt': 'Ошибка скачивания текста книги id =',
+            'download_image': 'Ошибка скачивания изображения книги id ='
+        }
+        raise requests.exceptions.HTTPError(messages.get(raise_func_name, 'HTTPError'))
 
 
 def parse_book_page(response):
@@ -64,17 +70,13 @@ def parse_book_page(response):
 
 
 def download_image(pic_url, folder='images/'):
-    try:
-        response = requests.get(pic_url, verify=False)
-        response.raise_for_status()
-    except requests.exceptions.HTTPError:
-        print(f"Ошибка скачивания изображения id: {pic_url}", file=sys.stderr)
-    else:
-        Path(folder).mkdir(parents=True, exist_ok=True)
-        pic_url_path = urllib.parse.unquote(urllib.parse.urlsplit(pic_url).path)
-        img_name = pic_url_path.split('/')[-1]
-        with open(f'{folder}{img_name}', 'wb') as img:
-            img.write(response.content)
+    response = requests.get(pic_url, verify=False)
+    response.raise_for_status()
+    Path(folder).mkdir(parents=True, exist_ok=True)
+    pic_url_path = urllib.parse.unquote(urllib.parse.urlsplit(pic_url).path)
+    img_name = pic_url_path.split('/')[-1]
+    with open(f'{folder}{img_name}', 'wb') as img:
+        img.write(response.content)
 
 
 def download_txt(book_id, book_txt_pattern, book_page_info, folder='books/'):
@@ -91,15 +93,11 @@ def download_txt(book_id, book_txt_pattern, book_page_info, folder='books/'):
     """
     payload = {'id': book_id}
     response = requests.get(book_txt_pattern, params=payload, verify=False)
+    check_for_redirect(response)
     response.raise_for_status()
-    try:
-        check_for_redirect(response)
-    except requests.exceptions.HTTPError:
-        print(f'Ошибка скачивания текста книги id: {book_id}', file=sys.stderr)
-    else:
-        Path(f'{folder}').mkdir(parents=True, exist_ok=True)
-        with open(f'{folder}{book_id}. {book_page_info["title"]}.txt', 'w') as book:
-            book.write(response.text)
+    Path(f'{folder}').mkdir(parents=True, exist_ok=True)
+    with open(f'{folder}{book_id}. {book_page_info["title"]}.txt', 'w') as book:
+        book.write(response.text)
 
 
 if __name__ == '__main__':
