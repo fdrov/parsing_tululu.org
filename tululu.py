@@ -54,8 +54,13 @@ def parse_book_page(response):
     pic_url = urllib.parse.urljoin(response.url, pic_path)
     comments = [comment.text for comment in soup.find('td', class_='ow_px_td').find_all('span', class_='black')]
     genres = [genre.text for genre in soup.find('td', class_='ow_px_td').find('span', class_='d_book').find_all('a')]
-    return {'title': pathvalidate.sanitize_filename(title.strip()), 'author': author.strip(), 'pic_url': pic_url,
-            'comments': comments, 'genres': genres}
+    return {
+        'title': pathvalidate.sanitize_filename(title.strip()),
+        'author': author.strip(),
+        'pic_url': pic_url,
+        'comments': comments,
+        'genres': genres
+    }
 
 
 def download_image(pic_url, folder='images/'):
