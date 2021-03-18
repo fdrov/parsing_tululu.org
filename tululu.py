@@ -20,7 +20,7 @@ def main():
     namespace = parser.parse_args()
 
     for book_id in range(namespace.start_id, namespace.end_id + 1):
-        response = requests.get(f'{book_url_pattern}{str(book_id)}', verify=False)
+        response = requests.get(f'{book_url_pattern}{book_id}', verify=False)
         try:
             check_for_redirect(response)
             response.raise_for_status()
