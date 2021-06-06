@@ -63,6 +63,7 @@ def parse_book_page(response):
     return {
         'title': pathvalidate.sanitize_filename(title.strip()),
         'author': author.strip(),
+        'img_src': pic_path,
         'pic_url': pic_url,
         'comments': comments,
         'genres': genres
@@ -96,7 +97,9 @@ def download_txt(book_id, book_txt_pattern, book_page_info, folder='books/'):
     check_for_redirect(response)
     response.raise_for_status()
     Path(f'{folder}').mkdir(parents=True, exist_ok=True)
-    with open(f'{folder}{book_id}. {book_page_info["title"]}.txt', 'w') as book:
+    with open(f'{folder}{book_id}. {book_page_info["title"]}.txt',
+              'w',
+              encoding='UTF-8') as book:
         book.write(response.text)
 
 
