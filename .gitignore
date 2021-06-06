@@ -140,7 +140,7 @@ dmypy.json
 cython_debug/
 .idea
 
-/test.py
+
 /books/
 /images/
 /bs4_tutorial.py
