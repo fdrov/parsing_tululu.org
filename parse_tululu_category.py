@@ -26,6 +26,7 @@ def main():
     parser = argparse.ArgumentParser(description='Этот скрипт скачает книги и изображения')
     parser.add_argument('--start_page', type=int,
                         # nargs='?',
+                        default=1,
                         help='Начальная страница',)
     parser.add_argument('--end_page', type=int,
                         # nargs='?',
