@@ -25,12 +25,11 @@ def main():
 
     parser = argparse.ArgumentParser()
     parser.add_argument('--start_page', type=int, nargs='?')
-    parser.add_argument('--end_page', type=int, nargs='?', default=last_page)
-    args = parser.parse_args(
-        '--start_page 1 --end_page 4'.split())  # TODO delete text into brackets to use script manually
+    parser.add_argument('--end_page', type=int, nargs='?', default=last_page+1)
+    args = parser.parse_args()  # TODO delete text into brackets to use script manually
     print(args)
 
-    for page_number in range(args.start_page, args.end_page + 1):
+    for page_number in range(args.start_page, args.end_page):
         book_category_paginated = urllib.parse.urljoin(book_category,
                                                        str(page_number))
         response = requests.get(book_category_paginated, verify=False)
@@ -64,9 +63,9 @@ def write_books_meta_to_json(books_meta_raw):
 def get_last_category_page(category_url):
     response = requests.get(category_url)
     soup = BeautifulSoup(response.text, 'lxml')
-    last_page = soup.find('p', class_='center').find_all('a', class_='npage')[
-        -1].text
-    return last_page
+    selector = '.center .npage'
+    last_page = soup.select(selector)[-1].text
+    return int(last_page)
 
 
 def parse_book_page(book_id):
