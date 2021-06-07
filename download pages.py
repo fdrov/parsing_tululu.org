@@ -101,10 +101,10 @@ def parse_book_page(book_id):
 
 def pars_books_from_page(response):
     soup = BeautifulSoup(response.text, features='lxml')
-    books_listing_raw = soup.find('td', class_='ow_px_td').find_all('div',
-                                                                    class_='bookimage')
+    selector = '.ow_px_td .bookimage a'
+    books_listing_raw = soup.select(selector)
     for book_tag in books_listing_raw:
-        book_id = book_tag.find('a')['href'].strip('/b')
+        book_id = book_tag['href'].strip('/b')
         book_meta_info, pic_path = parse_book_page(book_id)
         if download_txt(book_id, book_meta_info):
             download_image(pic_path)
