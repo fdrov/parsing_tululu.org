@@ -43,10 +43,7 @@ def main():
     parser.add_argument('--json_path',
                         default='',
                         help='указать свой путь к *.json файлу с результатами', )
-    args = parser.parse_args(
-        '--start_page 1 --end_page 2 --dest_folder destfolder --json_path jsonfolder'.split()
-    )  # TODO delete text into brackets to use script manually
-    print(args)
+    args = parser.parse_args()
     global skip_imgs, skip_txt
     skip_imgs = args.skip_imgs
     skip_txt = args.skip_txt
@@ -156,7 +153,8 @@ def download_txt(book_id, book_meta_info, base_save_path):
                     'w',
                     encoding='UTF-8') as book:
                 book.write(response.text)
-            book_path = posixpath.join(txt_full_path, f'{book_meta_info["title"]}.txt')
+            book_path = posixpath.join(txt_full_path,
+                                       f'{book_meta_info["title"]}.txt')
             book_meta_info['book_path'] = book_path
             print('Книга скачена', book_id)
     except requests.exceptions.HTTPError as err:
