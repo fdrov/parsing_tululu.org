@@ -104,16 +104,11 @@ def parse_book_page(book_id):
     except requests.exceptions.HTTPError as err:
         print(err, file=sys.stderr)
     soup = BeautifulSoup(response.text, 'lxml')
-    h1_text = soup.find('body').find('h1').text
+    h1_text = soup.select_one('body h1').text
     title, author = h1_text.split('::')
-    pic_url = soup.find('div', class_='bookimage').find('img')['src']
-    comments = [comment.text for comment in
-                soup.find('td', class_='ow_px_td').find_all('span',
-                                                            class_='black')]
-    genres = [genre.text for genre in
-              soup.find('td', class_='ow_px_td').find('span',
-                                                      class_='d_book').find_all(
-                  'a')]
+    pic_url = soup.select_one('.bookimage img')['src']
+    comments = [comment.text for comment in soup.select('.ow_px_td .black')]
+    genres = [genre.text for genre in soup.select('.ow_px_td span.d_book a')]
     book_meta_info = {
         'title': pathvalidate.sanitize_filename(title.strip()),
         'author': author.strip(),
