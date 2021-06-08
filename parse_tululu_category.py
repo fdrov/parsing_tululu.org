@@ -1,7 +1,7 @@
 import argparse
 import json
+import posixpath
 import sys
-import os
 import urllib
 from pathlib import Path
 
@@ -15,35 +15,36 @@ book_category = 'https://tululu.org/l55/'
 vhost = 'https://tululu.org'
 book_download_pattern = 'https://tululu.org/txt.php'
 book_page_pattern = 'https://tululu.org/b'
-images_folder = 'images/'
-books_folder = 'books/'
+images_folder = 'images'
+books_folder = 'books'
 catalogue = []
 
 
 def main():
     last_page = get_last_category_page(book_category)
 
-    parser = argparse.ArgumentParser(description='Этот скрипт скачает книги и изображения')
+    parser = argparse.ArgumentParser(
+        description='Этот скрипт скачает книги и изображения')
     parser.add_argument('--start_page', type=int,
                         # nargs='?',
                         default=1,
-                        help='Начальная страница',)
+                        help='Начальная страница', )
     parser.add_argument('--end_page', type=int,
                         # nargs='?',
-                        default=last_page+1,
-                        help='Страница, перед которой остановить парсинг',)
+                        default=last_page + 1,
+                        help='Страница, перед которой остановить парсинг', )
     parser.add_argument('--dest_folder',
                         default='',
                         help='Путь к каталогу с результатами парсинга')
     parser.add_argument('--skip_imgs', action='store_true',
-                        help='не скачивать картинки',)
+                        help='не скачивать картинки', )
     parser.add_argument('--skip_txt', action='store_true',
-                        help='не скачивать книги',)
+                        help='не скачивать книги', )
     parser.add_argument('--json_path',
                         default='',
-                        help='указать свой путь к *.json файлу с результатами',)
+                        help='указать свой путь к *.json файлу с результатами', )
     args = parser.parse_args(
-        '--start_page 1 --end_page 2 --dest_folder destfolder --json_path jsonfolder --skip_txt'.split()
+        '--start_page 1 --end_page 2 --dest_folder destfolder --json_path jsonfolder'.split()
     )  # TODO delete text into brackets to use script manually
     print(args)
     global skip_imgs, skip_txt
@@ -80,7 +81,7 @@ def check_for_redirect(response):
 
 
 def write_books_meta_to_json(books_meta_raw, base_save_path, json_path):
-    full_path = os.path.join(base_save_path, json_path, '')
+    full_path = posixpath.join(base_save_path, json_path, '')
     make_path(full_path)
     with open(f'{full_path}books.json', 'w', encoding='UTF-8') as json_file:
         json.dump(books_meta_raw, json_file, ensure_ascii=False, indent=2)
@@ -106,8 +107,6 @@ def parse_book_page(book_id):
     h1_text = soup.find('body').find('h1').text
     title, author = h1_text.split('::')
     pic_url = soup.find('div', class_='bookimage').find('img')['src']
-    pic_filename = os.path.basename(pic_url)
-    pic_path = os.path.join(images_folder, pic_filename)
     comments = [comment.text for comment in
                 soup.find('td', class_='ow_px_td').find_all('span',
                                                             class_='black')]
@@ -118,7 +117,8 @@ def parse_book_page(book_id):
     book_meta_info = {
         'title': pathvalidate.sanitize_filename(title.strip()),
         'author': author.strip(),
-        'img_src': pic_path,
+        'img_src': '',
+        'book_path': '',
         'comments': comments,
         'genres': genres
     }
@@ -133,7 +133,7 @@ def pars_books_from_page(response, base_save_path):
         book_id = book_tag['href'].strip('/b')
         book_meta_info, pic_url = parse_book_page(book_id)
         if download_txt(book_id, book_meta_info, base_save_path):
-            download_image(pic_url, base_save_path, )
+            download_image(pic_url, book_meta_info, base_save_path)
             catalogue.append(book_meta_info)
 
 
@@ -154,12 +154,15 @@ def download_txt(book_id, book_meta_info, base_save_path):
         check_for_redirect(response)
         response.raise_for_status()
         if not skip_txt:
-            txt_full_path = os.path.join(base_save_path, books_folder, '')
+            txt_full_path = posixpath.join(base_save_path, books_folder, '')
             Path(txt_full_path).mkdir(parents=True, exist_ok=True)
-            with open(f'{txt_full_path}{book_id}. {book_meta_info["title"]}.txt',
-                      'w',
-                      encoding='UTF-8') as book:
+            with open(
+                    f'{txt_full_path}{book_meta_info["title"]}.txt',
+                    'w',
+                    encoding='UTF-8') as book:
                 book.write(response.text)
+            book_path = posixpath.join(txt_full_path, f'{book_meta_info["title"]}.txt')
+            book_meta_info['book_path'] = book_path
             print('Книга скачена', book_id)
     except requests.exceptions.HTTPError as err:
         print(err, book_id)
@@ -167,16 +170,17 @@ def download_txt(book_id, book_meta_info, base_save_path):
     return True
 
 
-def download_image(img_relative_src, base_save_path):
+def download_image(img_relative_src, book_meta_info, base_save_path):
     if not skip_imgs:
         pic_absolute_url = urllib.parse.urljoin(vhost, img_relative_src)
         response = requests.get(pic_absolute_url, verify=False)
         response.raise_for_status()
-        image_full_path = os.path.join(base_save_path, images_folder, '')
+        image_full_path = posixpath.join(base_save_path, images_folder, '')
         Path(image_full_path).mkdir(parents=True, exist_ok=True)
-        img_name = os.path.basename(pic_absolute_url)
+        img_name = posixpath.basename(pic_absolute_url)
         with open(f'{image_full_path}{img_name}', 'wb') as img:
             img.write(response.content)
+        book_meta_info['img_src'] = posixpath.join(image_full_path, img_name)
 
 
 if __name__ == '__main__':
