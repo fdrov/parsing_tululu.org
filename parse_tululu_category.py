@@ -42,8 +42,12 @@ def main():
                         help='не скачивать книги', )
     parser.add_argument('--json_path',
                         default='',
-                        help='указать свой путь к *.json файлу с результатами', )
-    args = parser.parse_args()
+                        help='указать свой путь к *.json файлу с результатами',)
+    # args = parser.parse_args() # for production
+    args = parser.parse_args(
+        '--start_page 1 --end_page 2 --dest_folder destfolder --json_path jsonfolder'.split()
+    )  # for cozy testing
+    print(args)
     global skip_imgs, skip_txt
     skip_imgs = args.skip_imgs
     skip_txt = args.skip_txt
