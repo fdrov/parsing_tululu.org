@@ -152,10 +152,8 @@ def download_txt(book_id, book_meta_info, base_save_path):
         if not skip_txt:
             txt_full_path = posixpath.join(base_save_path, books_folder, '')
             Path(txt_full_path).mkdir(parents=True, exist_ok=True)
-            with open(
-                    f'{txt_full_path}{book_meta_info["title"]}.txt',
-                    'w',
-                    encoding='UTF-8') as book:
+            filename = f'{txt_full_path}{book_meta_info["title"]}.txt'
+            with open(filename, 'w', encoding='UTF-8') as book:
                 book.write(response.text)
             book_path = posixpath.join(txt_full_path,
                                        f'{book_meta_info["title"]}.txt')
