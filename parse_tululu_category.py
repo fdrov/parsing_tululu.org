@@ -90,10 +90,7 @@ def get_last_category_page(category_url):
 def parse_book_page(book_id):
     book_url = f'{BOOK_PAGE_PATTERN}{book_id}'
     response = requests.get(book_url, verify=False)
-    try:
-        response.raise_for_status()
-    except requests.exceptions.HTTPError as err:
-        logging.warning(err)
+    response.raise_for_status()
     soup = BeautifulSoup(response.text, 'lxml')
     h1_text = soup.select_one('body h1').text
     title, author = h1_text.split('::')
