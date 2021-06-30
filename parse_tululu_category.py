@@ -63,10 +63,6 @@ def main():
     write_books_meta_to_json(catalogue, args.dest_folder, args.json_path)
 
 
-def make_path(path):
-    Path(path).mkdir(parents=True, exist_ok=True)
-
-
 def check_for_redirect(response):
     if response.url == 'https://tululu.org/':
         raise_func_name = sys._getframe(1).f_code.co_name
@@ -81,7 +77,7 @@ def check_for_redirect(response):
 
 def write_books_meta_to_json(books_meta_raw, base_save_path, json_path):
     full_path = posixpath.join(base_save_path, json_path, '')
-    make_path(full_path)
+    Path(full_path).mkdir(parents=True, exist_ok=True)
     with open(f'{full_path}books.json', 'w', encoding='UTF-8') as json_file:
         json.dump(books_meta_raw, json_file, ensure_ascii=False, indent=2)
 
