@@ -1,7 +1,7 @@
 import argparse
 import json
+import logging
 import posixpath
-import sys
 import urllib
 from pathlib import Path
 
@@ -9,6 +9,8 @@ import pathvalidate
 import requests
 import urllib3
 from bs4 import BeautifulSoup
+
+logging.basicConfig(level=logging.INFO)
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 BOOK_CATEGORY = 'https://tululu.org/l55/'
@@ -45,7 +47,7 @@ def main():
     args = parser.parse_args(
         '--start_page 1 --end_page 2 --dest_folder destfolder --json_path jsonfolder'.split()
     )  # for cozy testing
-    print(args)
+    logging.info(args)
     for page_number in range(args.start_page, args.end_page):
         book_category_paginated = urllib.parse.urljoin(BOOK_CATEGORY,
                                                        str(page_number))
@@ -53,7 +55,7 @@ def main():
         try:
             response.raise_for_status()
             check_for_redirect(response)
-            print('Начинаю парсить страницу = ', page_number)
+            logging.info(f'Начинаю парсить страницу = {page_number}')
             pars_books_from_page(response,
                                  args.dest_folder,
                                  args.skip_imgs,
@@ -61,20 +63,13 @@ def main():
                                  catalogue
                                  )
         except requests.exceptions.HTTPError as err:
-            print(err, file=sys.stderr)
+            logging.warning(err)
     write_books_meta_to_json(catalogue, args.dest_folder, args.json_path)
 
 
 def check_for_redirect(response):
     if response.url == 'https://tululu.org/':
-        raise_func_name = sys._getframe(1).f_code.co_name
-        messages = {
-            'main': 'Отсутствует на сайте книга id =',
-            'download_txt': 'Ошибка скачивания текста книги id =',
-            'download_image': 'Ошибка скачивания изображения книги id ='
-        }
-        raise requests.exceptions.HTTPError(
-            messages.get(raise_func_name, 'HTTPError'))
+        raise requests.exceptions.HTTPError('Redirect to homepage')
 
 
 def write_books_meta_to_json(books_meta_raw, base_save_path, json_path):
@@ -98,7 +93,7 @@ def parse_book_page(book_id):
     try:
         response.raise_for_status()
     except requests.exceptions.HTTPError as err:
-        print(err, file=sys.stderr)
+        logging.warning(err)
     soup = BeautifulSoup(response.text, 'lxml')
     h1_text = soup.select_one('body h1').text
     title, author = h1_text.split('::')
@@ -116,7 +111,8 @@ def parse_book_page(book_id):
     return book_meta_info, pic_url
 
 
-def pars_books_from_page(response, base_save_path, skip_imgs, skip_txt, catalogue):
+def pars_books_from_page(response, base_save_path, skip_imgs, skip_txt,
+                         catalogue):
     soup = BeautifulSoup(response.text, features='lxml')
     selector = '.ow_px_td .bookimage a'
     books_listing_raw = soup.select(selector)
@@ -158,9 +154,9 @@ def download_txt(book_id, book_meta_info, base_save_path, skip_txt):
             book_path = posixpath.join(txt_full_path,
                                        f'{book_meta_info["title"]}.txt')
             book_meta_info['book_path'] = book_path
-            print('Книга скачена', book_id)
-    except requests.exceptions.HTTPError as err:
-        print(err, book_id)
+            logging.info(f'Книга скачена id={book_id}')
+    except requests.exceptions.HTTPError:
+        logging.warning(f'Ошибка скачивания книги id={book_id}')
         return 'error'
     return 'ok'
 
