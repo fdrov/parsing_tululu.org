@@ -26,11 +26,9 @@ def main():
     parser = argparse.ArgumentParser(
         description='Этот скрипт скачает книги и изображения')
     parser.add_argument('--start_page', type=int,
-                        # nargs='?',
                         default=1,
                         help='Начальная страница', )
     parser.add_argument('--end_page', type=int,
-                        # nargs='?',
                         default=last_page + 1,
                         help='Страница, перед которой остановить парсинг', )
     parser.add_argument('--dest_folder',
@@ -101,7 +99,6 @@ def parse_book_page(book_id):
     response = requests.get(book_url, verify=False)
     try:
         response.raise_for_status()
-        check_for_redirect(response)
     except requests.exceptions.HTTPError as err:
         print(err, file=sys.stderr)
     soup = BeautifulSoup(response.text, 'lxml')
@@ -148,7 +145,6 @@ def download_txt(book_id, book_meta_info, base_save_path):
     response = requests.get(book_download_pattern, params=payload, verify=False)
     try:
         check_for_redirect(response)
-        response.raise_for_status()
         if not skip_txt:
             txt_full_path = posixpath.join(base_save_path, books_folder, '')
             Path(txt_full_path).mkdir(parents=True, exist_ok=True)
