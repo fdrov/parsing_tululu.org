@@ -87,8 +87,8 @@ def write_books_meta_to_json(books_meta_raw, base_save_path, json_path):
 def get_last_category_page(category_url):
     response = requests.get(category_url)
     soup = BeautifulSoup(response.text, 'lxml')
-    selector = '.center .npage'
-    last_page = soup.select(selector)[-1].text
+    selector = '.center a:last-of-type'
+    last_page = soup.select_one(selector).text
     return int(last_page)
 
 
