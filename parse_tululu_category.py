@@ -11,17 +11,17 @@ import urllib3
 from bs4 import BeautifulSoup
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
-book_category = 'https://tululu.org/l55/'
-vhost = 'https://tululu.org'
-book_download_pattern = 'https://tululu.org/txt.php'
-book_page_pattern = 'https://tululu.org/b'
-images_folder = 'images'
-books_folder = 'books'
+BOOK_CATEGORY = 'https://tululu.org/l55/'
+VHOST = 'https://tululu.org'
+BOOK_DOWNLOAD_PATTERN = 'https://tululu.org/txt.php'
+BOOK_PAGE_PATTERN = 'https://tululu.org/b'
+IMAGES_FOLDER = 'images'
+BOOKS_FOLDER = 'books'
 catalogue = []
 
 
 def main():
-    last_page = get_last_category_page(book_category)
+    last_page = get_last_category_page(BOOK_CATEGORY)
 
     parser = argparse.ArgumentParser(
         description='Этот скрипт скачает книги и изображения')
@@ -50,7 +50,7 @@ def main():
     skip_imgs = args.skip_imgs
     skip_txt = args.skip_txt
     for page_number in range(args.start_page, args.end_page):
-        book_category_paginated = urllib.parse.urljoin(book_category,
+        book_category_paginated = urllib.parse.urljoin(BOOK_CATEGORY,
                                                        str(page_number))
         response = requests.get(book_category_paginated, verify=False)
         try:
@@ -91,7 +91,7 @@ def get_last_category_page(category_url):
 
 
 def parse_book_page(book_id):
-    book_url = f'{book_page_pattern}{book_id}'
+    book_url = f'{BOOK_PAGE_PATTERN}{book_id}'
     response = requests.get(book_url, verify=False)
     try:
         response.raise_for_status()
@@ -138,11 +138,11 @@ def download_txt(book_id, book_meta_info, base_save_path):
         None
     """
     payload = {'id': book_id}
-    response = requests.get(book_download_pattern, params=payload, verify=False)
+    response = requests.get(BOOK_DOWNLOAD_PATTERN, params=payload, verify=False)
     try:
         check_for_redirect(response)
         if not skip_txt:
-            txt_full_path = posixpath.join(base_save_path, books_folder, '')
+            txt_full_path = posixpath.join(base_save_path, BOOKS_FOLDER, '')
             Path(txt_full_path).mkdir(parents=True, exist_ok=True)
             filename = f'{txt_full_path}{book_meta_info["title"]}.txt'
             with open(filename, 'w', encoding='UTF-8') as book:
@@ -159,10 +159,10 @@ def download_txt(book_id, book_meta_info, base_save_path):
 
 def download_image(img_relative_src, book_meta_info, base_save_path):
     if not skip_imgs:
-        pic_absolute_url = urllib.parse.urljoin(vhost, img_relative_src)
+        pic_absolute_url = urllib.parse.urljoin(VHOST, img_relative_src)
         response = requests.get(pic_absolute_url, verify=False)
         response.raise_for_status()
-        image_full_path = posixpath.join(base_save_path, images_folder, '')
+        image_full_path = posixpath.join(base_save_path, IMAGES_FOLDER, '')
         Path(image_full_path).mkdir(parents=True, exist_ok=True)
         img_name = posixpath.basename(pic_absolute_url)
         with open(f'{image_full_path}{img_name}', 'wb') as img:
