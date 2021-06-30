@@ -123,7 +123,12 @@ def pars_books_from_page(response, base_save_path, skip_imgs, skip_txt, catalogu
     for book_tag in books_listing_raw:
         book_id = book_tag['href'].strip('/b')
         book_meta_info, pic_url = parse_book_page(book_id)
-        if download_txt(book_id, book_meta_info, base_save_path, skip_txt):
+        download_status = download_txt(book_id,
+                                       book_meta_info,
+                                       base_save_path,
+                                       skip_txt
+                                       )
+        if download_status == 'ok':
             download_image(pic_url, book_meta_info, base_save_path, skip_imgs)
             catalogue.append(book_meta_info)
 
@@ -156,8 +161,8 @@ def download_txt(book_id, book_meta_info, base_save_path, skip_txt):
             print('Книга скачена', book_id)
     except requests.exceptions.HTTPError as err:
         print(err, book_id)
-        return False
-    return True
+        return 'error'
+    return 'ok'
 
 
 def download_image(img_relative_src, book_meta_info, base_save_path, skip_imgs):
