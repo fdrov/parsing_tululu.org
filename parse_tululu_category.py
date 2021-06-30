@@ -17,10 +17,10 @@ BOOK_DOWNLOAD_PATTERN = 'https://tululu.org/txt.php'
 BOOK_PAGE_PATTERN = 'https://tululu.org/b'
 IMAGES_FOLDER = 'images'
 BOOKS_FOLDER = 'books'
-catalogue = []
 
 
 def main():
+    catalogue = []
     last_page = get_last_category_page(BOOK_CATEGORY)
 
     parser = argparse.ArgumentParser(
@@ -40,15 +40,12 @@ def main():
                         help='не скачивать книги', )
     parser.add_argument('--json_path',
                         default='',
-                        help='указать свой путь к *.json файлу с результатами',)
+                        help='указать свой путь к *.json файлу с результатами', )
     # args = parser.parse_args() # for production
     args = parser.parse_args(
         '--start_page 1 --end_page 2 --dest_folder destfolder --json_path jsonfolder'.split()
     )  # for cozy testing
     print(args)
-    global skip_imgs, skip_txt
-    skip_imgs = args.skip_imgs
-    skip_txt = args.skip_txt
     for page_number in range(args.start_page, args.end_page):
         book_category_paginated = urllib.parse.urljoin(BOOK_CATEGORY,
                                                        str(page_number))
@@ -57,7 +54,12 @@ def main():
             response.raise_for_status()
             check_for_redirect(response)
             print('Начинаю парсить страницу = ', page_number)
-            pars_books_from_page(response, args.dest_folder)
+            pars_books_from_page(response,
+                                 args.dest_folder,
+                                 args.skip_imgs,
+                                 args.skip_txt,
+                                 catalogue
+                                 )
         except requests.exceptions.HTTPError as err:
             print(err, file=sys.stderr)
     write_books_meta_to_json(catalogue, args.dest_folder, args.json_path)
@@ -114,25 +116,26 @@ def parse_book_page(book_id):
     return book_meta_info, pic_url
 
 
-def pars_books_from_page(response, base_save_path):
+def pars_books_from_page(response, base_save_path, skip_imgs, skip_txt, catalogue):
     soup = BeautifulSoup(response.text, features='lxml')
     selector = '.ow_px_td .bookimage a'
     books_listing_raw = soup.select(selector)
     for book_tag in books_listing_raw:
         book_id = book_tag['href'].strip('/b')
         book_meta_info, pic_url = parse_book_page(book_id)
-        if download_txt(book_id, book_meta_info, base_save_path):
-            download_image(pic_url, book_meta_info, base_save_path)
+        if download_txt(book_id, book_meta_info, base_save_path, skip_txt):
+            download_image(pic_url, book_meta_info, base_save_path, skip_imgs)
             catalogue.append(book_meta_info)
 
 
-def download_txt(book_id, book_meta_info, base_save_path):
+def download_txt(book_id, book_meta_info, base_save_path, skip_txt):
     """Функция для скачивания текстовых файлов.
 
     Args:
         book_id (int): Ссылка на id книги, которую хочется скачать.
         book_meta_info (dict): Словарь метаданных о книге.
         base_save_path (str): Путь к каталогу с папкой books
+        skip_txt (bool): Если True, то пропустить скачивание текста
 
     Returns:
         None
@@ -157,7 +160,7 @@ def download_txt(book_id, book_meta_info, base_save_path):
     return True
 
 
-def download_image(img_relative_src, book_meta_info, base_save_path):
+def download_image(img_relative_src, book_meta_info, base_save_path, skip_imgs):
     if not skip_imgs:
         pic_absolute_url = urllib.parse.urljoin(VHOST, img_relative_src)
         response = requests.get(pic_absolute_url, verify=False)
