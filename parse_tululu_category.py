@@ -43,10 +43,7 @@ def main():
     parser.add_argument('--json_path',
                         default='',
                         help='указать свой путь к *.json файлу с результатами', )
-    # args = parser.parse_args() # for production
-    args = parser.parse_args(
-        '--start_page 1 --end_page 2 --dest_folder destfolder2 --json_path jsonfolder'.split()
-    )  # for cozy testing
+    args = parser.parse_args()
     logging.info(args)
     for page_number in range(args.start_page, args.end_page):
         book_category_paginated = urllib.parse.urljoin(BOOK_CATEGORY,
