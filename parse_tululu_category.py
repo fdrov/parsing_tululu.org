@@ -45,7 +45,7 @@ def main():
                         help='указать свой путь к *.json файлу с результатами', )
     # args = parser.parse_args() # for production
     args = parser.parse_args(
-        '--start_page 1 --end_page 2 --dest_folder destfolder --json_path jsonfolder'.split()
+        '--start_page 1 --end_page 2 --dest_folder destfolder2 --json_path jsonfolder'.split()
     )  # for cozy testing
     logging.info(args)
     for page_number in range(args.start_page, args.end_page):
@@ -54,7 +54,6 @@ def main():
         response = requests.get(book_category_paginated, verify=False)
         try:
             response.raise_for_status()
-            check_for_redirect(response)
             logging.info(f'Начинаю парсить страницу = {page_number}')
             pars_books_from_page(response,
                                  args.dest_folder,
@@ -65,11 +64,6 @@ def main():
         except requests.exceptions.HTTPError as err:
             logging.warning(err)
     write_books_meta_to_json(catalogue, args.dest_folder, args.json_path)
-
-
-def check_for_redirect(response):
-    if response.url == 'https://tululu.org/':
-        raise requests.exceptions.HTTPError('Redirect to homepage')
 
 
 def write_books_meta_to_json(books_meta_raw, base_save_path, json_path):
@@ -140,22 +134,19 @@ def download_txt(book_id, book_meta_info, base_save_path, skip_txt):
     """
     payload = {'id': book_id}
     response = requests.get(BOOK_DOWNLOAD_PATTERN, params=payload, verify=False)
-    try:
-        check_for_redirect(response)
-        if not skip_txt:
-            txt_full_path = posixpath.join(base_save_path, BOOKS_FOLDER, '')
-            Path(txt_full_path).mkdir(parents=True, exist_ok=True)
-            filename = f'{txt_full_path}{book_meta_info["title"]}.txt'
-            with open(filename, 'w', encoding='UTF-8') as book:
-                book.write(response.text)
-            book_path = posixpath.join(txt_full_path,
-                                       f'{book_meta_info["title"]}.txt')
-            book_meta_info['book_path'] = book_path
-            logging.info(f'Книга скачена id={book_id}')
-    except requests.exceptions.HTTPError:
-        logging.warning(f'Ошибка скачивания книги id={book_id}')
-        return 'error'
-    return 'ok'
+    if not response.url == 'https://tululu.org/' and not skip_txt:
+        txt_full_path = posixpath.join(base_save_path, BOOKS_FOLDER, '')
+        Path(txt_full_path).mkdir(parents=True, exist_ok=True)
+        filename = f'{txt_full_path}{book_meta_info["title"]}.txt'
+        with open(filename, 'w', encoding='UTF-8') as book:
+            book.write(response.text)
+        book_path = posixpath.join(txt_full_path,
+                                   f'{book_meta_info["title"]}.txt')
+        book_meta_info['book_path'] = book_path
+        logging.info(f'Книга скачена id={book_id}')
+        return 'ok'
+    logging.warning(f'Ошибка скачивания книги id={book_id}')
+    return 'error'
 
 
 def download_image(img_relative_src, book_meta_info, base_save_path, skip_imgs):
