@@ -131,6 +131,7 @@ def download_txt(book_id, book_meta_info, base_save_path, skip_txt):
     """
     payload = {'id': book_id}
     response = requests.get(BOOK_DOWNLOAD_PATTERN, params=payload, verify=False)
+    response.raise_for_status()
     if not response.url == 'https://tululu.org/' and not skip_txt:
         txt_full_path = posixpath.join(base_save_path, BOOKS_FOLDER, '')
         Path(txt_full_path).mkdir(parents=True, exist_ok=True)
