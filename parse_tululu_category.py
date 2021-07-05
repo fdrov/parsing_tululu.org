@@ -108,25 +108,30 @@ def pars_books_from_page(response, base_save_path, skip_imgs, skip_txt,
     for book_tag in books_listing_raw:
         book_id = book_tag['href'].strip('/b')
         book_meta_info, pic_url = parse_book_page(book_id)
-        download_status = download_txt(book_id,
-                                       book_meta_info,
-                                       base_save_path,
-                                       skip_txt
-                                       )
-        if download_status == 'ok':
-            download_image(pic_url, book_meta_info, base_save_path, skip_imgs)
+        book_path = download_txt(book_id,
+                                 base_save_path,
+                                 skip_txt,
+                                 book_meta_info["title"]
+                                 )
+        book_meta_info['book_path'] = book_path
+        if book_path:
+            img_src = download_image(pic_url,
+                                     base_save_path,
+                                     skip_imgs
+                                     )
+            book_meta_info['img_src'] = img_src
             catalogue.append(book_meta_info)
 
 
-def download_txt(book_id, book_meta_info, base_save_path, skip_txt):
+def download_txt(book_id, base_save_path, skip_txt, book_title):
     """Функция для скачивания текстовых файлов.
 
     Args:
         book_id (int): Ссылка на id книги, которую хочется скачать.
-        book_meta_info (dict): Словарь метаданных о книге.
+        # book_meta_info (dict): Словарь метаданных о книге.
         base_save_path (str): Путь к каталогу с папкой books
         skip_txt (bool): Если True, то пропустить скачивание текста
-
+        book_title(str): Название книги
     Returns:
         None
     """
@@ -136,19 +141,18 @@ def download_txt(book_id, book_meta_info, base_save_path, skip_txt):
     if not response.url == 'https://tululu.org/' and not skip_txt:
         txt_full_path = posixpath.join(base_save_path, BOOKS_FOLDER, '')
         Path(txt_full_path).mkdir(parents=True, exist_ok=True)
-        filename = f'{txt_full_path}{book_meta_info["title"]}.txt'
+        filename = f'{txt_full_path}{book_title}.txt'
         with open(filename, 'w', encoding='UTF-8') as book:
             book.write(response.text)
         book_path = posixpath.join(txt_full_path,
-                                   f'{book_meta_info["title"]}.txt')
-        book_meta_info['book_path'] = book_path
+                                   f'{book_title}.txt')
+        # book_meta_info['book_path'] = book_path
         logger.info(f'Книга скачена id={book_id}')
-        return 'ok'
+        return book_path
     logger.warning(f'Ошибка скачивания книги id={book_id}')
-    return 'error'
 
 
-def download_image(img_relative_src, book_meta_info, base_save_path, skip_imgs):
+def download_image(img_relative_src, base_save_path, skip_imgs):
     if not skip_imgs:
         pic_absolute_url = urllib.parse.urljoin(VHOST, img_relative_src)
         response = requests.get(pic_absolute_url, verify=False)
@@ -158,7 +162,8 @@ def download_image(img_relative_src, book_meta_info, base_save_path, skip_imgs):
         img_name = posixpath.basename(pic_absolute_url)
         with open(f'{image_full_path}{img_name}', 'wb') as img:
             img.write(response.content)
-        book_meta_info['img_src'] = posixpath.join(image_full_path, img_name)
+        img_src = posixpath.join(image_full_path, img_name)
+        return img_src
 
 
 if __name__ == '__main__':
