@@ -10,7 +10,7 @@ import requests
 import urllib3
 from bs4 import BeautifulSoup
 
-logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger('parse_lululu')
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 BOOK_CATEGORY = 'https://tululu.org/l55/'
@@ -22,6 +22,7 @@ BOOKS_FOLDER = 'books'
 
 
 def main():
+    logging.basicConfig(level=logging.INFO)
     catalogue = []
     last_page = get_last_category_page(BOOK_CATEGORY)
 
@@ -44,14 +45,14 @@ def main():
                         default='',
                         help='указать свой путь к *.json файлу с результатами', )
     args = parser.parse_args()
-    logging.info(args)
+    logger.info(args)
     for page_number in range(args.start_page, args.end_page):
         book_category_paginated = urllib.parse.urljoin(BOOK_CATEGORY,
                                                        str(page_number))
         response = requests.get(book_category_paginated, verify=False)
         try:
             response.raise_for_status()
-            logging.info(f'Начинаю парсить страницу = {page_number}')
+            logger.info(f'Начинаю парсить страницу = {page_number}')
             pars_books_from_page(response,
                                  args.dest_folder,
                                  args.skip_imgs,
@@ -59,7 +60,7 @@ def main():
                                  catalogue
                                  )
         except requests.exceptions.HTTPError as err:
-            logging.warning(err)
+            logger.warning(err)
     write_books_meta_to_json(catalogue, args.dest_folder, args.json_path)
 
 
@@ -141,9 +142,9 @@ def download_txt(book_id, book_meta_info, base_save_path, skip_txt):
         book_path = posixpath.join(txt_full_path,
                                    f'{book_meta_info["title"]}.txt')
         book_meta_info['book_path'] = book_path
-        logging.info(f'Книга скачена id={book_id}')
+        logger.info(f'Книга скачена id={book_id}')
         return 'ok'
-    logging.warning(f'Ошибка скачивания книги id={book_id}')
+    logger.warning(f'Ошибка скачивания книги id={book_id}')
     return 'error'
 
 
